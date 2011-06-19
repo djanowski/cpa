@@ -1,0 +1,90 @@
+#! /usr/bin/env ruby
+# encoding: UTF-8
+
+PROVINCIAS = {
+  "capital federal" => "C",
+  "caba" => "C",
+  "ciudad autonoma de buenos aires" => "C",
+  "buenos aires" => "B",
+  "catamarca" => "K",
+  "chaco" => "H",
+  "chubut" => "U",
+  "cordoba" => "X",
+  "corrientes" => "W",
+  "entre rios" => "E",
+  "formosa" => "P",
+  "jujuy" => "Y",
+  "la pampa" => "L",
+  "la rioja" => "F",
+  "mendoza" => "M",
+  "misiones" => "N",
+  "neuquen" => "Q",
+  "rio negro" => "R",
+  "salta" => "A",
+  "san juan" => "J",
+  "san luis" => "D",
+  "santa cruz" => "Z",
+  "santa fe" => "S",
+  "santiago del estero" => "G",
+  "tierra del fuego" => "V",
+  "tucuman" => "T"
+}
+
+trap(:INT) { exit 1 }
+
+def flunk(message)
+  $stderr.puts message
+  exit 1
+end
+
+def simplify(str)
+  str.downcase.tr("áéíóú", "aeiou")
+end
+
+def parse(line)
+  flunk("Error: nada que buscar.") if line.nil? || line.empty?
+
+  parts = line.split(/,\s*/)
+
+  flunk("Error: no se encontró la provincia.") if parts.size < 2
+
+  if parts[0] =~ /^(?:Av |Avenida )?(.+?) (\d+)$/
+    calle = $1
+    altura = $2
+  end
+
+  provincia = PROVINCIAS[simplify(parts[-1])] ||
+    flunk("Error: no se encontró la provincia '#{parts[-1]}'.")
+
+  if provincia == "C"
+    localidad = "5001"
+  else
+    localidad = File.open("db/#{provincia}") do |io|
+      while line = io.gets
+        id, name = line.split(" ", 2)
+
+        break id if name.start_with?(parts[-2].upcase)
+      end
+    end
+  end
+
+  require "net/http/persistent"
+
+  http = Net::HTTP::Persistent.new
+
+  post = Net::HTTP::Post.new("/consultas/cpa/obtener_cpa")
+  post.body = "localidad=#{localidad}&calle=#{http.escape(simplify(calle))}&altura=#{http.escape(altura)}"
+  http.request(URI.parse("http://www.correoargentino.com.ar"), post).body[/[A-Z]\d{4}[A-Z]{3}/]
+end
+
+###
+
+if ARGV.first == "-"
+  $stdout.sync = true
+
+  while line = gets
+    puts parse(line.chomp)
+  end
+else
+  puts parse(ARGV.first)
+end
