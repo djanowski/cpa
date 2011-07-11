@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "cpa"
-  s.version = "0.0.1"
+  s.version = "0.0.2"
   s.summary = "A CLI tool to query Argentinean zip codes."
   s.authors = ["Damian Janowski"]
   s.email = ["djanowski@dimaion.com"]
@@ -16,6 +16,7 @@ Gem::Specification.new do |s|
     "LICENSE",
     "README*",
     "Rakefile",
+    "db/*",
     "bin/*",
     "lib/**/*.rb",
     "test/*.*",
