@@ -59,7 +59,7 @@ def parse(line)
   if provincia == "C"
     localidad = "5001"
   else
-    localidad = File.open("db/#{provincia}") do |io|
+    localidad = File.open(File.expand_path("../db/#{provincia}", File.dirname(__FILE__))) do |io|
       while line = io.gets
         id, name = line.split(" ", 2)
 
